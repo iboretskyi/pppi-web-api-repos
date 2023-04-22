@@ -1,11 +1,13 @@
 ﻿using AnimeWebAPI.Models;
 using AnimeWebAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AnimeWebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class AnimeController : ControllerBase
     {
         private readonly IAnimeService _animeService;
