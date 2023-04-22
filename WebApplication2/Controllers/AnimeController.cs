@@ -1,50 +1,33 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using WebApplication2.Models;
+﻿using AnimeWebAPI.Models;
+using AnimeWebAPI.Services;
+using Microsoft.AspNetCore.Mvc;
 
-namespace WebApplication2.Controllers
+namespace AnimeWebAPI.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class AnimeController : ControllerBase
     {
-        private static readonly string[] Genres = new[]
-        {
-            "Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"
-        };
+        private readonly IAnimeService _animeService;
 
-        private static readonly List<Anime> animeList = new List<Anime>
+        public AnimeController(IAnimeService animeService)
         {
-            new Anime { Id = 1, Title = "Dragon Ball Z", Genre = "Action", Episodes = 291, Rating = 8},
-            new Anime { Id = 2, Title = "Sailor Moon", Genre = "Fantasy", Episodes = 200, Rating = 7},
-            new Anime { Id = 3, Title = "Pokemon", Genre = "Adventure", Episodes = 276, Rating = 6},
-            new Anime { Id = 4, Title = "Cowboy Bebop", Genre = "Sci-Fi", Episodes = 26, Rating = 9},
-            new Anime { Id = 5, Title = "Yu Yu Hakusho", Genre = "Action", Episodes = 112, Rating = 8},
-            new Anime { Id = 6, Title = "Rurouni Kenshin", Genre = "Adventure", Episodes = 94, Rating = 7},
-            new Anime { Id = 7, Title = "Neon Genesis Evangelion", Genre = "Sci-Fi", Episodes = 26, Rating = 9},
-            new Anime { Id = 8, Title = "Slam Dunk", Genre = "Sports", Episodes = 101, Rating = 8},
-            new Anime { Id = 9, Title = "Saint Seiya", Genre = "Action", Episodes = 114, Rating = 7},
-            new Anime { Id = 10, Title = "Berserk", Genre = "Fantasy", Episodes = 25, Rating = 9},
-        };
-
-        private readonly ILogger<AnimeController> _logger;
-
-        public AnimeController(ILogger<AnimeController> logger)
-        {
-            _logger = logger;
+            _animeService = animeService;
         }
 
-        // GET api/anime
+        // GET: api/anime
         [HttpGet]
-        public IActionResult GetAnimeList()
+        public async Task<IActionResult> GetAllAsync()
         {
-            return Ok(animeList);
+            var animes = await _animeService.GetAllAsync();
+            return Ok(animes);
         }
 
-        // GET api/anime/{id}
-        [HttpGet("{id}", Name = "GetAnimeById")]
-        public IActionResult GetAnimeById(int id)
+        // GET: api/anime/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetByIdAsync(int id)
         {
-            var anime = animeList.FirstOrDefault(a => a.Id == id);
+            var anime = await _animeService.GetByIdAsync(id);
             if (anime == null)
             {
                 return NotFound();
@@ -52,17 +35,33 @@ namespace WebApplication2.Controllers
             return Ok(anime);
         }
 
-
-        // POST api/anime
+        // POST: api/anime
         [HttpPost]
-        public IActionResult AddAnime([FromBody] Anime anime)
+        public async Task<IActionResult> AddAsync(Anime anime)
         {
-            // Add the new anime to the list
-            animeList.Add(anime);
-
-            // Return the newly created anime with the generated ID
-            return CreatedAtRoute("GetAnimeById", new { id = anime.Id }, anime);
+            var createdAnime = await _animeService.AddAsync(anime);
+            return CreatedAtAction(nameof(GetByIdAsync), new { id = createdAnime.Id }, createdAnime);
         }
 
+        // PUT: api/anime/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAsync(int id, Anime anime)
+        {
+            if (id != anime.Id)
+            {
+                return BadRequest();
+            }
+
+            await _animeService.UpdateAsync(anime);
+            return NoContent();
+        }
+
+        // DELETE: api/anime/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            await _animeService.DeleteAsync(id);
+            return NoContent();
+        }
     }
 }
