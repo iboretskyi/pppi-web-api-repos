@@ -6,21 +6,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services registration here
-
-/* 
- * Register services with scoped lifetime
- * Scoped instances are created once per request (per client request in case of a web app)
- * This means that for each incoming request, a new instance of the service will be created,
- * allowing us to keep the data separate and isolated for each request.
- * It's a good choice for this app, as we're managing in-memory data and want to keep data
- * separate for each request without sharing it among multiple requests.
- */
 builder.Services.AddScoped<IAnimeService, AnimeService>();
 builder.Services.AddScoped<ICharacterService, CharacterService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
@@ -44,14 +36,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Add controllers services
 builder.Services.AddControllers();
 
+// Add API versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
 // Add Swagger configuration
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "AnimeWebAPI", Version = "v1" });
+    c.SwaggerDoc("v2", new OpenApiInfo { Title = "AnimeWebAPI", Version = "v2" });
+    c.SwaggerDoc("v3", new OpenApiInfo { Title = "AnimeWebAPI", Version = "v3" });
 });
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -64,6 +73,8 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "AnimeWebAPI v1");
+    c.SwaggerEndpoint("/swagger/v2/swagger.json", "AnimeWebAPI v2");
+    c.SwaggerEndpoint("/swagger/v3/swagger.json", "AnimeWebAPI v3");
 });
 
 app.UseRouting();

@@ -1,13 +1,16 @@
 ﻿using AnimeWebAPI.Models;
 using AnimeWebAPI.Services;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AnimeWebAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
+    [Route("api/{v:apiVersion}/[controller]")]
+    [ApiVersion("1.0", Deprecated = true)]
+    [ApiVersion("2.0")]
+    [ApiVersion("3.0")]
     public class CharacterController : ControllerBase
     {
         private readonly ICharacterService _characterService;
@@ -17,12 +20,64 @@ namespace AnimeWebAPI.Controllers
             _characterService = characterService;
         }
 
-        // GET: api/character
+        // GET: api/v{version}/character
         [HttpGet]
-        public async Task<IActionResult> GetAllAsync()
+        [MapToApiVersion("1.0")]
+        [Obsolete]
+        [Authorize]
+        public IActionResult GetAllAsyncV1()
         {
+            // return any integer value
+            return Ok(123);
+        }
+
+        [HttpGet]
+        [MapToApiVersion("2.0")]
+        [Authorize]
+        public IActionResult GetAllAsyncV2()
+        {
+            // return any string value
+            return Ok("This is version 2.0");
+        }
+
+        [HttpGet]
+        [MapToApiVersion("3.0")]
+        [Authorize]
+        public async Task<IActionResult> GetAllAsyncV3()
+        {
+            // generate an Excel file and return it
+
             var characters = await _characterService.GetAllAsync();
-            return Ok(characters);
+
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Characters");
+
+            // Header
+            worksheet.Cell(1, 1).Value = "ID";
+            worksheet.Cell(1, 2).Value = "Name";
+            worksheet.Cell(1, 3).Value = "Role";
+            worksheet.Cell(1, 4).Value = "Anime ID";
+            worksheet.Cell(1, 5).Value = "Anime";
+
+            // Data
+            int i = 2;
+            foreach (var character in characters)
+            {
+                worksheet.Cell(i, 1).Value = character.Id;
+                worksheet.Cell(i, 2).Value = character.Name;
+                worksheet.Cell(i, 3).Value = character.Role;
+                worksheet.Cell(i, 4).Value = character.AnimeId;
+                i++;
+            }
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            var content = stream.ToArray();
+
+            return File(
+                content,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Characters.xlsx");
         }
 
         // GET: api/character/{id}
@@ -66,5 +121,4 @@ namespace AnimeWebAPI.Controllers
             return NoContent();
         }
     }
-
 }
