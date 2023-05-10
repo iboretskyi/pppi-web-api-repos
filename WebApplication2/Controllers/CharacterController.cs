@@ -24,7 +24,6 @@ namespace AnimeWebAPI.Controllers
         [HttpGet]
         [MapToApiVersion("1.0")]
         [Obsolete]
-        [Authorize]
         public IActionResult GetAllAsyncV1()
         {
             // return any integer value
@@ -33,7 +32,6 @@ namespace AnimeWebAPI.Controllers
 
         [HttpGet]
         [MapToApiVersion("2.0")]
-        [Authorize]
         public IActionResult GetAllAsyncV2()
         {
             // return any string value
@@ -42,7 +40,6 @@ namespace AnimeWebAPI.Controllers
 
         [HttpGet]
         [MapToApiVersion("3.0")]
-        [Authorize]
         public async Task<IActionResult> GetAllAsyncV3()
         {
             // generate an Excel file and return it
@@ -57,7 +54,6 @@ namespace AnimeWebAPI.Controllers
             worksheet.Cell(1, 2).Value = "Name";
             worksheet.Cell(1, 3).Value = "Role";
             worksheet.Cell(1, 4).Value = "Anime ID";
-            worksheet.Cell(1, 5).Value = "Anime";
 
             // Data
             int i = 2;
